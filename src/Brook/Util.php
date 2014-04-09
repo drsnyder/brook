@@ -8,4 +8,8 @@ class Util {
     return sprintf("tcp://%s:%d", $host, $port);
   }
 
+  public static function passThroughCallback($msg) {
+    return $msg;
+  }
+
 }

@@ -1,17 +1,15 @@
 <?php
 
 namespace Brook;
+use Brook\Util;
 
-function pass_through_call_back($msg) {
-  return $msg;
-}
 
 class WorkerTest extends \PHPUnit_Framework_TestCase {
 
   public function testRunAsParent() {
     $worker = \Phake::partialMock('\Brook\Worker');
     \Phake::when($worker)->fork()->thenReturn(1);
-    $result = $worker->run('pass_through_call_back');
+    $result = $worker->run('Util::passThroughCallback');
     $this->assertEquals(1, $result);
     \Phake::verify($worker)->fork();
   }
@@ -56,7 +54,7 @@ class WorkerTest extends \PHPUnit_Framework_TestCase {
     $readable = array($receiver);
     $writeable = array();
     \Phake::when($poller)
-      ->poll(\Phake::setReference($readable), \Phake::setReference($writeable), 10)
+      ->poll(\Phake::setReference($readable), \Phake::setReference($writeable), \Brook\Worker::POLL_TIMEOUT)
       ->thenReturn(1);
 
     $worker->setReceiver($receiver);
@@ -67,7 +65,7 @@ class WorkerTest extends \PHPUnit_Framework_TestCase {
     $readable = array($receiver);
     $writeable = array();
     \Phake::when($poller)
-      ->poll(\Phake::setReference($readable), \Phake::setReference($writeable), 10)
+      ->poll(\Phake::setReference($readable), \Phake::setReference($writeable), \Brook\Worker::POLL_TIMEOUT)
       ->thenReturn(1);
 
     $this->assertEquals(\Brook\Worker::READ_READY, $worker->poll());
@@ -75,7 +73,7 @@ class WorkerTest extends \PHPUnit_Framework_TestCase {
     $readable = array($controller);
     $writeable = array();
     \Phake::when($poller)
-      ->poll(\Phake::setReference($readable), \Phake::setReference($writeable), 10)
+      ->poll(\Phake::setReference($readable), \Phake::setReference($writeable), \Brook\Worker::POLL_TIMEOUT)
       ->thenReturn(1);
     $this->assertEquals(\Brook\Worker::SHUTDOWN, $worker->poll());
 

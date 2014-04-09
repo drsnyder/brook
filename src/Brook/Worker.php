@@ -8,17 +8,19 @@ class Worker {
   const READ_READY = 1;
   const SHUTDOWN   = -1;
 
+  const POLL_TIMEOUT = 100;
+
 
   protected $serverPort;
   protected $controllerPort;
   protected $senderPort;
 
   protected $context;
-  protected $controller;
-  protected $receiver;
-  protected $sender;
+  protected $controller = null;
+  protected $receiver   = null;
+  protected $sender     = null;
 
-  protected $poller;
+  protected $poller = null;
 
   protected $pid;
 
@@ -56,19 +58,19 @@ class Worker {
     $handled = 0;
     $pid = $this->fork();
 
-    // initialize the sockets after we fork
-    $this->initialize();
-
-
     if ($pid) {
       // return back to parent
       return $pid;
     }
 
+    // initialize the sockets after we fork
+    $this->initialize();
+
     while (true) {
       $ret = $this->poll();
       if ($ret === self::READ_READY) {
-        $result = $fn($this->receiver->recv());
+        $message = $this->receiver->recv();
+        $result = call_user_func($fn, $message);
         $this->forward($result);
         $handled++;
       } elseif ($ret === self::SHUTDOWN) {
@@ -81,13 +83,15 @@ class Worker {
 
   public function poll() {
     $readable = $writeable = array();
-    $events = $this->poller->poll($readable, $writeable, 10);
+    $events = $this->poller->poll($readable, $writeable, self::POLL_TIMEOUT);
     if ($events > 0) {
       foreach ($readable as $socket) {
         if ($socket === $this->receiver) {
           return self::READ_READY;
         } else if ($socket === $this->controller) {
           return self::SHUTDOWN;
+        } else {
+          fprintf(STDERR, "Unknown socket!\n");
         }
       }
     }
