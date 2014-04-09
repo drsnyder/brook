@@ -52,13 +52,14 @@ class Channel {
   }
 
   public function sendOffWorker($fn) {
-    $worker = new Worker($this->serverPort, $this->controllerPort, $this->sinkPort);
+    $worker = $this->createWorker($this->serverPort, $this->controllerPort, $this->sinkPort);
     $worker->run($fn);
 
     if ($worker->getPid() === 0) {
       // child
-      exit(0);
+      $this->exitChild();
     }
+
     return $worker;
   }
 
@@ -105,7 +106,6 @@ class Channel {
   protected function setupController() {
     if (!$this->controller) {
       $this->controller = new \ZMQSocket($this->context, \ZMQ::SOCKET_PUB);
-      printf("Channel connected to %s\n", Util::genURI($this->controllerPort, "*"));
       $this->controller->bind(Util::genURI($this->controllerPort, "*"));
     }
   }
@@ -115,6 +115,14 @@ class Channel {
       $this->sink = new \ZMQSocket($this->context, \ZMQ::SOCKET_PULL);
       $this->sink->bind(Util::genURI($this->sinkPort, "*"));
     }
+  }
+
+  protected function exitChild($code=0) {
+    exit($code);
+  }
+
+  protected function createWorker($serverPort=7778, $controllerPort=7779, $senderPort=7780) {
+    return new Worker($serverPort, $controllerPort, $senderPort);
   }
 
 }

@@ -43,4 +43,33 @@ class ChannelTest extends \PHPUnit_Framework_TestCase {
     $channel->shutdown();
     \Phake::verify($controller)->send("SHUTDOWN");
   }
+
+
+  public function testSendOffWorker() {
+    // make sure we exit the child
+    $worker  = \Phake::partialMock('\Brook\Worker');
+    $channel = \Phake::partialMock('\Brook\Channel');
+
+    $server     = \Phake::mock('ZMQSocket');
+    $controller = \Phake::mock('ZMQSocket');
+    $sink       = \Phake::mock('ZMQSocket');
+
+    $channel->setServer($server);
+    $channel->setController($controller);
+    $channel->setSink($sink);
+
+    \Phake::when($worker)->run('Util::passThroughCallback')->thenReturn(true);
+    \Phake::when($worker)->getPid()->thenReturn(0);
+
+    \Phake::when($channel)->createWorker(7778, 7779, 7780)->thenReturn($worker);
+    \Phake::when($channel)->exitChild()->thenReturn(true);
+    \Phake::when($channel)->initialize()->thenReturn(true);
+
+    $this->assertEquals($worker, $channel->sendOffWorker('Util::passThroughCallback'));
+    \Phake::verify($channel)->createWorker(7778, 7779, 7780);
+    \Phake::verify($worker)->run('Util::passThroughCallback');
+    \Phake::verify($worker)->getPid();
+    \Phake::verify($channel)->exitChild();
+
+  }
 }
