@@ -13,28 +13,28 @@ Brook was created to make concurrent stream processing more accessible in PHP. I
 Here is a simple examlpe where 20 messages are fanned out and multiplied then collected and confirmed back
 in the main thread of execution.
 
-  $messageCount = 20;
-  $multiplier   = 2;
-  
-  $channel = new Brook\Channel();
-  $channel->work(2, function($value) use ($multiplier) {
-    return sprintf("%d %d", $value, $value * $multiplier);
-  });
-  
-  for ($i=1; $i<=$messageCount; $i++) {
-    $channel->enqueue($i);
-    echo "sent $i", PHP_EOL;
-  }
-  
-  for ($i=1; $i<=$messageCount; $i++) {
-    $result = $channel->readFromSink();
-    list($value, $multiplied) = explode(' ', $result);
-  
-    echo "got $value, $multiplied", PHP_EOL;
-    assert($multiplied == ($multiplier * $value));
-  }
-  
-  $channel->shutdown();
+    $messageCount = 20;
+    $multiplier   = 2;
+    
+    $channel = new Brook\Channel();
+    $channel->work(2, function($value) use ($multiplier) {
+      return sprintf("%d %d", $value, $value * $multiplier);
+    });
+    
+    for ($i=1; $i<=$messageCount; $i++) {
+      $channel->enqueue($i);
+      echo "sent $i", PHP_EOL;
+    }
+    
+    for ($i=1; $i<=$messageCount; $i++) {
+      $result = $channel->readFromSink();
+      list($value, $multiplied) = explode(' ', $result);
+    
+      echo "got $value, $multiplied", PHP_EOL;
+      assert($multiplied == ($multiplier * $value));
+    }
+    
+    $channel->shutdown();
 
 
 ## LICENSE (MIT)
