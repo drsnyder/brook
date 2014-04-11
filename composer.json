@@ -8,7 +8,7 @@
             "email": "drsnyder@gmail.com"
         }
     ],
-    "version": "1.0.0-alpha"
+    "version": "1.0.0-alpha",
     "minimum-stability": "dev",
     "require-dev": {
       "phpunit/phpunit": "3.7.*",
