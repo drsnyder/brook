@@ -1,6 +1,6 @@
 {
     "name": "drsnyder/brook",
-    "description": "A ligthweigth zmq stream library.",
+    "description": "A lightweight concurrency framework for PHP based on zeromq.",
     "license": "MIT",
     "authors": [
         {
@@ -8,7 +8,6 @@
             "email": "drsnyder@gmail.com"
         }
     ],
-    "version": "1.0.0-alpha",
     "minimum-stability": "dev",
     "require-dev": {
       "phpunit/phpunit": "3.7.*",
