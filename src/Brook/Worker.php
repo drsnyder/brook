@@ -2,6 +2,7 @@
 
 namespace Brook;
 use Brook\Util;
+use Brook\TaskInterface;
 
 class Worker {
 
@@ -54,7 +55,7 @@ class Worker {
     $this->context = new \ZMQContext();
   }
 
-  public function run($fn) {
+  public function run(TaskInterface $task) {
     $handled = 0;
     $pid = $this->fork();
 
@@ -65,12 +66,13 @@ class Worker {
 
     // initialize the sockets after we fork
     $this->initialize();
+    $task->setup();
 
     while (true) {
       $ret = $this->poll();
       if ($ret === self::READ_READY) {
         $message = $this->receiver->recv();
-        $result = call_user_func($fn, $message);
+        $result = $task->work($message);
         $this->forward($result);
         $handled++;
       } elseif ($ret === self::SHUTDOWN) {
@@ -78,6 +80,7 @@ class Worker {
       }
     }
 
+    $task->tearDown();
     return $handled;
   }
 
@@ -127,7 +130,6 @@ class Worker {
   public function isActive() {
     return $this->active;
   }
-
 
   protected function initialize() {
     $this->setupReceiver();

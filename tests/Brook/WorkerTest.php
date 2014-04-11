@@ -2,14 +2,17 @@
 
 namespace Brook;
 use Brook\Util;
+use Brook\TaskInterface;
 
 
 class WorkerTest extends \PHPUnit_Framework_TestCase {
 
   public function testRunAsParent() {
     $worker = \Phake::partialMock('\Brook\Worker');
+    $task   = \Phake::mock('\Brook\TaskInterface');
+
     \Phake::when($worker)->fork()->thenReturn(1);
-    $result = $worker->run('Util::passThroughCallback');
+    $result = $worker->run($task);
     $this->assertEquals(1, $result);
     \Phake::verify($worker)->fork();
   }
@@ -21,13 +24,19 @@ class WorkerTest extends \PHPUnit_Framework_TestCase {
     $poller     = \Phake::mock('ZMQPoll');
 
     $worker = \Phake::partialMock('\Brook\Worker');
+    $task   = \Phake::mock('\Brook\TaskInterface');
     // signal we are a child
     \Phake::when($worker)->fork()->thenReturn(0);
     \Phake::when($worker)->poll()
       ->thenReturn(\Brook\Worker::READ_READY)
       ->thenReturn(\Brook\Worker::SHUTDOWN);
 
+
     $message = "one message";
+    \Phake::when($task)->setup()->thenReturn(null);
+    \Phake::when($task)->tearDown()->thenReturn(null);
+    \Phake::when($task)->work($message)->thenReturn($message);
+
     \Phake::when($receiver)->recv()->thenReturn($message);
     \Phake::when($sender)->send($message)->thenReturn(true); // verify
 
@@ -37,10 +46,13 @@ class WorkerTest extends \PHPUnit_Framework_TestCase {
     $worker->setPoller($poller);
 
 
-    $this->assertEquals(1, $worker->run(function($msg) { return $msg; }));
+    $this->assertEquals(1, $worker->run($task));
     \Phake::verify($worker)->fork();
     \Phake::verify($sender)->send($message);
     \Phake::verify($worker)->forward($message);
+    \Phake::verify($task)->setup();
+    \Phake::verify($task)->tearDown();
+    \Phake::verify($task)->work($message);
   }
 
   public function testPoll() {

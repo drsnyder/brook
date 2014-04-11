@@ -13,28 +13,37 @@ Brook was created to make concurrent stream processing more accessible in PHP. I
 Here is a simple examlpe where 20 messages are fanned out and multiplied then collected and confirmed back
 in the main thread of execution.
 
-    $messageCount = 20;
-    $multiplier   = 2;
+   class MultiplicationTask implements \Brook\TaskInterface {
+     const MULTIPLIER = 2;
 
-    $channel = new Brook\FanOut();
-    $channel->distributeWork(2, function($value) use ($multiplier) {
-      return sprintf("%d %d", $value, $value * $multiplier);
-    });
+     public function setup() { }
+     public function tearDown() { }
 
-    for ($i=1; $i<=$messageCount; $i++) {
-      $channel->enqueue($i);
-      echo "sent $i", PHP_EOL;
-    }
+     public function work($value) {
+       return sprintf("%d %d", $value, $value * self::MULTIPLIER);
+     }
+   }
 
-    for ($i=1; $i<=$messageCount; $i++) {
-      $result = $channel->readFromSink();
-      list($value, $multiplied) = explode(' ', $result);
 
-      echo "got $value, $multiplied", PHP_EOL;
-      assert($multiplied == ($multiplier * $value));
-    }
+   $messageCount = 20;
 
-    $channel->shutdown();
+   $fanOut = new Brook\FanOut();
+   $fanOut->distributeWork(2, new MultiplicationTask());
+
+   for ($i=1; $i<=$messageCount; $i++) {
+     $fanOut->enqueue($i);
+     echo "sent $i", PHP_EOL;
+   }
+
+   for ($i=1; $i<=$messageCount; $i++) {
+     $result = $fanOut->readFromSink();
+     list($value, $multiplied) = explode(' ', $result);
+
+     echo "got $value, $multiplied", PHP_EOL;
+     assert($multiplied == (MultiplicationTask::MULTIPLIER * $value));
+   }
+
+   $fanOut->shutdown();
 
 
 ## LICENSE (MIT)

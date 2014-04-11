@@ -2,6 +2,7 @@
 
 namespace Brook;
 use Brook\Util;
+use Brook\TaskInterface;
 
 class FanOut {
 
@@ -42,18 +43,18 @@ class FanOut {
     $this->workers = array();
   }
 
-  public function distributeWork($concurrency, $fn) {
+  public function distributeWork($concurrency, TaskInterface $task) {
     for ($i=0; $i<$concurrency; $i++) {
-      $this->workers[] = $this->sendOffWorker($fn);
+      $this->workers[] = $this->sendOffWorker($task);
     }
 
     $this->initialize();
     sleep(1);
   }
 
-  public function sendOffWorker($fn) {
+  public function sendOffWorker($task) {
     $worker = $this->createWorker($this->serverPort, $this->controllerPort, $this->sinkPort);
-    $worker->run($fn);
+    $worker->run($task);
 
     if ($worker->getPid() === 0) {
       // child

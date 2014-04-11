@@ -1,26 +1,36 @@
 <?php
 
+
 require __DIR__.'/../vendor/autoload.php';
 
-$messageCount = 20;
-$multiplier   = 2;
+class MultiplicationTask implements \Brook\TaskInterface {
+  const MULTIPLIER = 2;
 
-$channel = new Brook\FanOut();
-$channel->distributeWork(2, function($value) use ($multiplier) {
-  return sprintf("%d %d", $value, $value * $multiplier);
-});
+  public function setup() { }
+  public function tearDown() { }
+
+  public function work($value) {
+    return sprintf("%d %d", $value, $value * self::MULTIPLIER);
+  }
+}
+
+
+$messageCount = 20;
+
+$fanOut = new Brook\FanOut();
+$fanOut->distributeWork(2, new MultiplicationTask());
 
 for ($i=1; $i<=$messageCount; $i++) {
-  $channel->enqueue($i);
+  $fanOut->enqueue($i);
   echo "sent $i", PHP_EOL;
 }
 
 for ($i=1; $i<=$messageCount; $i++) {
-  $result = $channel->readFromSink();
+  $result = $fanOut->readFromSink();
   list($value, $multiplied) = explode(' ', $result);
 
   echo "got $value, $multiplied", PHP_EOL;
-  assert($multiplied == ($multiplier * $value));
+  assert($multiplied == (MultiplicationTask::MULTIPLIER * $value));
 }
 
-$channel->shutdown();
+$fanOut->shutdown();
