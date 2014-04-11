@@ -3,7 +3,7 @@
 namespace Brook;
 use Brook\Util;
 
-class Channel {
+class FanOut {
 
   protected $workers;
 
@@ -42,7 +42,7 @@ class Channel {
     $this->workers = array();
   }
 
-  public function work($concurrency, $fn) {
+  public function distributeWork($concurrency, $fn) {
     for ($i=0; $i<$concurrency; $i++) {
       $this->workers[] = $this->sendOffWorker($fn);
     }

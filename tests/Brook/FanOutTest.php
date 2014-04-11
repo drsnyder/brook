@@ -4,11 +4,11 @@ namespace Brook;
 use Brook\Util;
 
 
-class ChannelTest extends \PHPUnit_Framework_TestCase {
+class FanOutTest extends \PHPUnit_Framework_TestCase {
 
   public function testWork() {
     $worker  = \Phake::partialMock('\Brook\Worker');
-    $channel = \Phake::partialMock('\Brook\Channel');
+    $channel = \Phake::partialMock('\Brook\FanOut');
 
     $server     = \Phake::mock('ZMQSocket');
     $controller = \Phake::mock('ZMQSocket');
@@ -21,14 +21,14 @@ class ChannelTest extends \PHPUnit_Framework_TestCase {
     \Phake::when($channel)->sendOffWorker('Util::passThroughCallback')->thenReturn($worker);
     \Phake::when($channel)->initialize()->thenReturn(true);
 
-    $channel->work(3, 'Util::passThroughCallback');
+    $channel->distributeWork(3, 'Util::passThroughCallback');
     $this->assertEquals(3, count($channel->getWorkers()));
     \Phake::verify($channel, \Phake::times(3))->sendOffWorker('Util::passThroughCallback');
     \Phake::verify($channel)->initialize();
   }
 
   public function testShutdown() {
-    $channel = \Phake::partialMock('\Brook\Channel');
+    $channel = \Phake::partialMock('\Brook\FanOut');
 
     $server     = \Phake::mock('ZMQSocket');
     $controller = \Phake::mock('ZMQSocket');
@@ -48,7 +48,7 @@ class ChannelTest extends \PHPUnit_Framework_TestCase {
   public function testSendOffWorker() {
     // make sure we exit the child
     $worker  = \Phake::partialMock('\Brook\Worker');
-    $channel = \Phake::partialMock('\Brook\Channel');
+    $channel = \Phake::partialMock('\Brook\FanOut');
 
     $server     = \Phake::mock('ZMQSocket');
     $controller = \Phake::mock('ZMQSocket');

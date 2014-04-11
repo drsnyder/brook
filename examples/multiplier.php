@@ -5,8 +5,8 @@ require __DIR__.'/../vendor/autoload.php';
 $messageCount = 20;
 $multiplier   = 2;
 
-$channel = new Brook\Channel();
-$channel->work(2, function($value) use ($multiplier) {
+$channel = new Brook\FanOut();
+$channel->distributeWork(2, function($value) use ($multiplier) {
   return sprintf("%d %d", $value, $value * $multiplier);
 });
 
